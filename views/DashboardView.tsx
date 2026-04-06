@@ -1,0 +1,203 @@
+
+import React from 'react';
+import { AppState, View, ProblemType, DailyChecklist } from '../types.ts';
+import { TONICS, PROBLEM_TO_TONIC } from '../constants.tsx';
+import { GlassCard } from '../components/GlassCard.tsx';
+import { Button } from '../components/Button.tsx';
+import { CheckCircle2, Clock, Calendar, TrendingUp, ArrowRight, Circle, ChevronRight, Zap, Timer, Activity, Flame, ShieldCheck, Beaker, BookOpen, Crown, ListChecks } from 'lucide-react';
+
+const iconMap: any = { Zap, Timer, Activity, Flame, ShieldCheck, Droplet: ShieldCheck };
+
+interface DashboardViewProps {
+  state: AppState;
+  onNavigate: (view: View) => void;
+  onTonicNavigate: (id: string) => void;
+  onTonicToggle: (date: string, type: 'main' | 'complementary', tonicId?: string) => void;
+}
+
+export const DashboardView: React.FC<DashboardViewProps> = ({ state, onNavigate, onTonicNavigate, onTonicToggle }) => {
+  const today = new Date().toISOString().split('T')[0];
+  const todayCheck = state.checklist[today] || { mainTonic: false, complementary: [] };
+
+  const mainTonicId = PROBLEM_TO_TONIC[state.user?.profile?.mainProblem as ProblemType] || 'anti-broxada';
+  const mainTonic = TONICS[mainTonicId] || TONICS['anti-broxada'];
+  const MainIcon = iconMap[mainTonic.icon] || Zap;
+
+  return (
+    <div className="space-y-10 pb-12">
+      {/* Hero Card */}
+      <GlassCard className="glass-dark text-white border-none overflow-hidden relative shadow-2xl p-6 sm:p-10 rounded-[32px] sm:rounded-[40px]">
+        <div className="relative z-10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-8 mb-8 sm:mb-10">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 gradient-primary rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(230,57,70,0.5)] shrink-0">
+                <Crown size={32} className="sm:w-10 sm:h-10" />
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-3xl font-black tracking-tight uppercase leading-tight">Bem-vindo, {state.user?.name.split(' ')[0]}</h2>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
+                   <span className="bg-[#E63946] text-white text-[8px] sm:text-[10px] font-black px-2 sm:px-3 py-1 rounded shadow-lg uppercase tracking-widest">Membro Elite</span>
+                   <p className="text-gray-400 text-[10px] sm:text-xs font-bold tracking-widest uppercase">Protocolo 21 Dias</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-6">
+            <div className="flex justify-between text-[11px] font-black uppercase tracking-[0.25em] text-gray-400">
+              <span>ESTÁGIO DE EVOLUÇÃO</span>
+              <span className="text-[#E63946] animate-pulse">Ativo 🔥</span>
+            </div>
+            <div className="w-full h-4 bg-white/5 rounded-full overflow-hidden border border-white/10 p-0.5">
+              <div 
+                className="h-full gradient-primary rounded-full transition-all duration-1000" 
+                // Fix: Added explicit type cast for Object.values to avoid 'unknown' type error
+                style={{ width: `${Math.min(100, ((Object.values(state.checklist) as DailyChecklist[]).filter(c => c.mainTonic).length / 21) * 100)}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+        <div className="absolute top-0 right-0 w-80 h-80 gradient-primary opacity-10 rounded-full -mr-40 -mt-40 blur-[100px]"></div>
+      </GlassCard>
+
+      {/* Main Tonic Card */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        <div className="md:col-span-8">
+          <GlassCard className="relative overflow-hidden border-none shadow-sm p-6 sm:p-10 bg-white rounded-[32px] sm:rounded-[40px]" onClick={() => onTonicNavigate(mainTonicId)}>
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8 sm:mb-10">
+               <div className="flex items-center gap-4 sm:gap-6">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-50 text-black rounded-2xl flex items-center justify-center shrink-0">
+                    <MainIcon size={24} className="sm:w-8 sm:h-8" />
+                  </div>
+                  <div className="flex flex-col">
+                    <h3 className="text-[8px] sm:text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-1">FOCO PERSONALIZADO</h3>
+                    <h2 className="text-xl sm:text-2xl font-black text-black uppercase tracking-tighter leading-tight">{mainTonic.name}</h2>
+                  </div>
+               </div>
+               <div className="badge-personalized">HOJE</div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-10">
+               <div className="p-6 sm:p-8 rounded-3xl bg-gray-50 border border-gray-100 flex flex-col justify-between">
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">MOMENTO IDEAL</p>
+                    <div className="flex items-center gap-4 mb-6">
+                       <Clock size={24} className="text-[#E63946]" />
+                       <span className="text-lg sm:text-xl font-black text-black">{mainTonic.timing.split(' ')[0]}</span>
+                    </div>
+                  </div>
+                  <div className={`flex items-center gap-3 text-[11px] font-black tracking-[0.2em] ${todayCheck.mainTonic ? 'text-[#2ECC71]' : 'text-[#E63946]'}`}>
+                     {todayCheck.mainTonic ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+                     {todayCheck.mainTonic ? 'CONCLUÍDO' : 'PENDENTE'}
+                  </div>
+               </div>
+               <div className="flex flex-col gap-4">
+                  <Button variant="primary" fullWidth className="h-14 sm:h-16" onClick={(e) => {
+                    e.stopPropagation();
+                    onTonicNavigate(mainTonicId);
+                  }}>VER RECEITA</Button>
+                  {!todayCheck.mainTonic && (
+                    <Button variant="secondary" fullWidth className="h-14 sm:h-16" onClick={(e) => {
+                      e.stopPropagation();
+                      onTonicToggle(today, 'main');
+                    }}>SINALIZAR AGORA</Button>
+                  )}
+               </div>
+            </div>
+          </GlassCard>
+        </div>
+
+        <div className="md:col-span-4 space-y-6">
+           <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] ml-2">SUPORTES EXTRA</h3>
+           <div className="grid grid-cols-1 gap-4">
+              <GlassCard 
+                className="p-6 hover:translate-y-[-4px] group flex items-center justify-between border-none shadow-sm bg-white rounded-3xl"
+                onClick={() => onTonicNavigate('detox-vascular')}
+              >
+                <div className="flex items-center gap-5">
+                  <div className="w-12 h-12 bg-gray-50 text-black rounded-xl flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all">
+                    <ShieldCheck size={24} />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-black text-sm uppercase leading-tight mb-1">Detox Vascular</h4>
+                    <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest">Diário</p>
+                  </div>
+                </div>
+                <ChevronRight size={20} className="text-gray-300 group-hover:text-black transition-all" />
+              </GlassCard>
+              
+              <GlassCard 
+                className="p-6 border-2 border-dashed border-gray-200 hover:border-black hover:bg-black group transition-all flex items-center justify-between rounded-3xl"
+                onClick={() => onNavigate(View.CATALOG)}
+              >
+                <div className="flex items-center gap-5">
+                  <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center text-white shadow-lg">
+                    <Beaker size={20} />
+                  </div>
+                  <h4 className="font-black text-black group-hover:text-white text-xs uppercase tracking-widest">Catálogo</h4>
+                </div>
+                <ArrowRight size={20} className="text-black group-hover:text-white group-hover:translate-x-1 transition-all" />
+              </GlassCard>
+           </div>
+        </div>
+      </div>
+
+      {/* Catalog Focus Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">CATÁLOGO COMPLETO</h3>
+          <Button variant="secondary" className="h-8 px-4 text-[9px]" onClick={() => onNavigate(View.CATALOG)}>VER TODOS</Button>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {Object.values(TONICS).map((tonic) => {
+            const TonicIcon = iconMap[tonic.icon] || Zap;
+            return (
+              <GlassCard 
+                key={tonic.id}
+                className="p-6 border-none shadow-sm bg-white hover:translate-y-[-4px] transition-all cursor-pointer rounded-3xl"
+                onClick={() => onTonicNavigate(tonic.id)}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gray-50 text-black rounded-xl flex items-center justify-center">
+                    <TonicIcon size={24} />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-black text-black text-sm uppercase leading-tight">{tonic.name}</h4>
+                    <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest mt-1">{tonic.timing}</p>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-300" />
+                </div>
+              </GlassCard>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Quick Nav Grid - Simplified */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <GlassCard onClick={() => onNavigate(View.BONUSES)} className="flex items-center gap-4 p-6 border-none shadow-sm bg-black text-white hover:scale-[1.01] transition-all rounded-[32px]">
+             <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center text-white shadow-2xl shrink-0">
+                <Crown size={24} />
+             </div>
+             <div className="flex-1">
+                <h3 className="text-lg font-black uppercase tracking-tighter">Área VIP</h3>
+                <p className="text-[10px] text-gray-400 font-medium">Conteúdo de domínio.</p>
+             </div>
+             <ChevronRight size={20} className="ml-auto text-gray-600 shrink-0" />
+          </GlassCard>
+
+          <GlassCard onClick={() => onNavigate(View.TRACKER)} className="flex items-center gap-4 p-6 border-none shadow-sm bg-white hover:scale-[1.01] transition-all rounded-[32px]">
+             <div className="w-12 h-12 bg-gray-50 text-black rounded-xl flex items-center justify-center shadow-sm shrink-0">
+                <Zap size={24} className="text-[#E63946]" />
+             </div>
+             <div className="flex-1">
+                <h3 className="text-lg font-black uppercase tracking-tighter">Modo Turbo</h3>
+                <p className="text-[10px] text-gray-400 font-medium">Aceleração.</p>
+             </div>
+             <ChevronRight size={20} className="ml-auto text-gray-300 shrink-0" />
+          </GlassCard>
+      </div>
+    </div>
+  );
+};
